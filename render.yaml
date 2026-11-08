@@ -52,6 +52,16 @@ projects:
                 generateValue: true
               - key: LANGFLOW_NEW_USER_IS_ACTIVE
                 value: "false"
+              # Langflow runs custom component code on the server. Only admins may
+              # write it, so other users cannot run arbitrary code on this host.
+              - key: LANGFLOW_CUSTOM_COMPONENT_ADMIN_ONLY
+                value: "true"
+              # Only the service itself may call the API from a browser.
+              - key: LANGFLOW_CORS_ORIGINS
+                fromService:
+                  name: langflow
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
               - key: DO_NOT_TRACK
                 value: "true"
 
