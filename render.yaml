@@ -1,0 +1,65 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+#
+# Langflow wrapper. This repo does not contain the app.
+# The service pulls the official image from Docker Hub at a pinned version.
+# To upgrade, bump the image tag below and push.
+# Upstream: https://github.com/langflow-ai/langflow
+
+previews:
+  generation: off
+
+projects:
+  - name: langflow
+    environments:
+      - name: production
+        services:
+          - type: web
+            name: langflow
+            runtime: image
+            image:
+              url: docker.io/langflowai/langflow:1.13.1
+            plan: standard
+            region: oregon
+            numInstances: 1
+            healthCheckPath: /health_check
+            disk:
+              # Config (including the saved secret key) and uploaded files.
+              # Flows, users, and messages live in Postgres.
+              name: langflow-data
+              mountPath: /app/data
+              sizeGB: 5
+            envVars:
+              - key: LANGFLOW_HOST
+                value: 0.0.0.0
+              - key: LANGFLOW_PORT
+                value: "7860"
+              - key: LANGFLOW_DATABASE_URL
+                fromDatabase:
+                  name: langflow-db
+                  property: connectionString
+              - key: LANGFLOW_CONFIG_DIR
+                value: /app/data/.langflow
+              # Encrypts API keys saved in Langflow. Never change it after you
+              # store credentials.
+              - key: LANGFLOW_SECRET_KEY
+                generateValue: true
+              # Require sign-in. Auto-login would make every visitor an admin.
+              - key: LANGFLOW_AUTO_LOGIN
+                value: "false"
+              - key: LANGFLOW_SUPERUSER
+                value: admin
+              - key: LANGFLOW_SUPERUSER_PASSWORD
+                generateValue: true
+              - key: LANGFLOW_NEW_USER_IS_ACTIVE
+                value: "false"
+              - key: DO_NOT_TRACK
+                value: "true"
+
+        databases:
+          - name: langflow-db
+            databaseName: langflow
+            user: langflow
+            plan: basic-256mb
+            region: oregon
+            postgresMajorVersion: "16"
+            ipAllowList: []
